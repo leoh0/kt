@@ -15,7 +15,7 @@ timestamps="${default_timestamps}"
 skip_colors="${default_skip_colors}"
 
 since="${default_since}"
-version="leoh0/1.0.0"
+version="leoh0/1.0.1"
 
 multi_select=""
 full_log=""
@@ -181,9 +181,9 @@ fi
 
 # Get all pods matching the input and put them in an array. If no input then all pods are matched.
 if [[ "${multi_select}" == "" && "${full_log}" == "" ]]; then
-    matched=$(kubectl get pods --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$2}' | sed 's/\(.*\)-[0-9a-z]\{5\}/\1/g')
+    matched=$(kubectl get pods --show-labels=true --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$7}')
     matched_namespace=$(echo $matched | cut -d':' -f1)
-    matched_pod=$(echo $matched | cut -d':' -f2)
+    matched_label=$(echo $matched | cut -d':' -f2)
 fi
 
 matching_pods_string=''
@@ -205,7 +205,7 @@ while true ; do
         if [[ "${multi_select}" != "" ]]; then
             matching_pods=(`kubectl get pods --all-namespaces | sed '1d' | fzf -x -m -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$2}'`)
         else
-            matching_pods=(`kubectl get pods -n ${matched_namespace} | grep ${matched_pod} | awk "{print \"${matched_namespace}:\"\\$1\":\"\\$2\":\"\\$3}"`)
+            matching_pods=(`kubectl get pods -n ${matched_namespace} -l ${matched_label} | sed '1d' | awk "{print \"${matched_namespace}:\"\\$1\":\"\\$2\":\"\\$3}"`)
         fi
     fi
     matching_pods_size=${#matching_pods[@]}
