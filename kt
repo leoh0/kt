@@ -181,7 +181,7 @@ fi
 
 # Get all pods matching the input and put them in an array. If no input then all pods are matched.
 if [[ "${multi_select}" == "" && "${full_log}" == "" ]]; then
-    matched=$(kubectl get pods --show-labels=true --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$7}')
+    matched=$(kubectl get pods --show-labels=true -o wide --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$8}')
     matched_namespace=$(echo $matched | cut -d':' -f1)
     matched_label=$(echo $matched | cut -d':' -f2)
 fi
@@ -200,10 +200,10 @@ fi
 
 while true ; do
     if [[ "${full_log}" != "" ]]; then
-        matching_pods=(`kubectl get pods --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$2}'`)
+        matching_pods=(`kubectl get pods -o wide --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$2}'`)
     else
         if [[ "${multi_select}" != "" ]]; then
-            matching_pods=(`kubectl get pods --all-namespaces | sed '1d' | fzf -x -m -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$2}'`)
+            matching_pods=(`kubectl get pods -o wide --all-namespaces | sed '1d' | fzf -x -m -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$2}'`)
         else
             matching_pods=(`kubectl get pods -n ${matched_namespace} -l ${matched_label} | sed '1d' | awk "{print \"${matched_namespace}:\"\\$1\":\"\\$2\":\"\\$3}"`)
         fi
