@@ -155,17 +155,19 @@ function kill_kubectl_processes {
         rm ${tailpid_temp_file} 2>/dev/null
     fi
 
-    while read p; do
-        # In order to not kill the wrong processes (for example if a kubectl process died and another process replaced its PID)
-        # we check that the process name contains "kt". It's not bulletproof since another kt process
-        # might have picked up the old PID but this is deemed unlikley.
-        pid_cmd=$(ps -p "$p" -o command=)
-        if [[ $pid_cmd == *${PROGNAME}* ]]; then
-            # Try killing gently first and then progress to more firm alternatives if this fails
-              kill "$p" 2>/dev/null || kill -2 "$p" 2>/dev/null || kill -9 "$p" 2>/dev/null
-        fi
-    done < "$pid_temp_file"
-    rm ${pid_temp_file} 2>/dev/null
+    if [[ "$pid_temp_file" != '' ]]; then
+        while read p; do
+            # In order to not kill the wrong processes (for example if a kubectl process died and another process replaced its PID)
+            # we check that the process name contains "kt". It's not bulletproof since another kt process
+            # might have picked up the old PID but this is deemed unlikley.
+            pid_cmd=$(ps -p "$p" -o command=)
+            if [[ $pid_cmd == *${PROGNAME}* ]]; then
+                # Try killing gently first and then progress to more firm alternatives if this fails
+                  kill "$p" 2>/dev/null || kill -2 "$p" 2>/dev/null || kill -9 "$p" 2>/dev/null
+            fi
+        done < "$pid_temp_file"
+        rm ${pid_temp_file} 2>/dev/null
+    fi
 }
 
 # Invoke the "kill_kubectl_processes" function when the script is stopped (including ctrl+c)
@@ -181,7 +183,7 @@ fi
 
 # Get all pods matching the input and put them in an array. If no input then all pods are matched.
 if [[ "${multi_select}" == "" && "${full_log}" == "" ]]; then
-    matched=$(kubectl get pods --show-labels=true -o wide --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$8}')
+    matched=$(kubectl get pods --show-labels=true -o wide --all-namespaces | sed '1d' | fzf -x -e +s --reverse --bind=left:page-up,right:page-down --no-mouse | awk '{print $1":"$9}')
     matched_namespace=$(echo $matched | cut -d':' -f1)
     matched_label=$(echo $matched | cut -d':' -f2)
 fi
@@ -241,17 +243,17 @@ while true ; do
 
         for container in ${pod_containers[@]}; do
 
-			if [[ "${full_log}" != "" ]]; then
-				color_start=""
-				color_end=""
-			else
-	            if [ ${colored_output} == "false" ] || [ ${matching_pods_size} -eq 1 -a ${#pod_containers[@]} -eq 1 ]; then
-	                color_start=$(tput sgr0)
-	            else
-	                color_index=`next_col $color_index`
-	                color_start=$(tput setaf $color_index)
-	            fi
-			fi
+            if [[ "${full_log}" != "" ]]; then
+                color_start=""
+                color_end=""
+            else
+                if [ ${colored_output} == "false" ] || [ ${matching_pods_size} -eq 1 -a ${#pod_containers[@]} -eq 1 ]; then
+                    color_start=$(tput sgr0)
+                else
+                    color_index=`next_col $color_index`
+                    color_start=$(tput setaf $color_index)
+                fi
+            fi
 
             if [ ${#pod_containers[@]} -eq 1 ]; then
                 display_name="${pod}"
