@@ -308,7 +308,7 @@ while true ; do
             exit 0
         else
             # Aggreate all logs and print to stdout
-            /usr/bin/tail +1f <( eval "${command_to_tail}" ) $line_buffered &
+            tail -n -f +1 <( eval "${command_to_tail}" ) $line_buffered &
         fi
         tailpid=$(echo $!)
         tailpid_temp_file="/tmp/kt.${tailpid}" # Use the PID to create a temp file
